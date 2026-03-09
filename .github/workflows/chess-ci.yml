@@ -1,17 +1,17 @@
-name: Auth CI
+name: Chess CI
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'auth-service/**'
-      - '.github/workflows/auth-ci.yml'
+      - 'chess-service/**'
+      - '.github/workflows/lobby-ci.yml'
       - '.github/workflows/_python-service-ci.yml'
   workflow_dispatch:
 
 jobs:
-  auth-ci:
+  lobby-ci:
     uses: ./.github/workflows/_python-service-ci.yml
     with:
-      service_path: auth-service
+      service_path: chess-service

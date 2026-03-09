@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'Lobby-Service/**'
+      - 'lobby-service/**'
       - '.github/workflows/lobby-ci.yml'
       - '.github/workflows/_python-service-ci.yml'
   workflow_dispatch:
@@ -14,4 +14,4 @@ jobs:
   lobby-ci:
     uses: ./.github/workflows/_python-service-ci.yml
     with:
-      service_path: Lobby-Service
+      service_path: lobby-service
