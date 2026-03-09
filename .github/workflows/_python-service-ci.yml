@@ -7,6 +7,9 @@ on:
         required: true
         type: string
 
+env:
+  DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+
 jobs:
   ci:
     name: CI

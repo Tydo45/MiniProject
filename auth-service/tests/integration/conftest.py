@@ -7,12 +7,11 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from auth.config import get_integration_database_url, reset_settings_cache
+
 load_dotenv()
-
-database_url = os.getenv("DATABASE_URL")
-
-if database_url is None:
-    raise RuntimeError("DATABASE_URL is not set")
+reset_settings_cache()
+database_url = get_integration_database_url()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,11 +26,11 @@ def postgres_container():
             "-p",
             "5432:5432",
             "-e",
-            "POSTGRES_DB=auth_db",
+            "POSTGRES_DB=ci",
             "-e",
-            "POSTGRES_USER=auth_service",
+            "POSTGRES_USER=ci",
             "-e",
-            "POSTGRES_PASSWORD=auth_pass",
+            "POSTGRES_PASSWORD=ci",
             "postgres:16",
         ],
         check=True,
@@ -39,7 +38,10 @@ def postgres_container():
 
     time.sleep(5)
 
-    subprocess.run(["alembic", "upgrade", "head"], check=True)
+    # Force Alembic to migrate the same database this test session uses.
+    alembic_env = os.environ.copy()
+    alembic_env["DATABASE_URL"] = database_url
+    subprocess.run(["alembic", "upgrade", "head"], check=True, env=alembic_env)
 
     yield
 
