@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
+from auth.routes.routes import router
 
-from auth.routes.routes import router  # noqa: E402
+load_dotenv()
 
 app = FastAPI(title="auth-service")
 

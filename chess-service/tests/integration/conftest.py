@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from auth.config import get_integration_database_url, reset_settings_cache
+from chess.config import get_integration_database_url, reset_settings_cache
 
 load_dotenv()
 reset_settings_cache()
@@ -22,7 +22,7 @@ def postgres_container():
             "run",
             "-d",
             "--name",
-            "auth-test-postgres",
+            "chess-test-postgres",
             "-p",
             "5432:5432",
             "-e",
@@ -44,7 +44,7 @@ def postgres_container():
 
     yield
 
-    subprocess.run(["docker", "rm", "-f", "auth-test-postgres"], check=False)
+    subprocess.run(["docker", "rm", "-f", "chess-test-postgres"], check=False)
 
 
 @pytest.fixture
