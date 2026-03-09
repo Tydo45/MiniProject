@@ -6,9 +6,6 @@ on:
       service_path:
         required: true
         type: string
-      python_package:
-        required: true
-        type: string
 
 jobs:
   ci:
