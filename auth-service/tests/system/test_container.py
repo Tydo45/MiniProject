@@ -7,15 +7,69 @@ import requests
 
 @pytest.mark.system
 def test_container_health():
+    subprocess.run(["docker", "network", "create", "auth-test-network"], check=True)
+
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            "auth-test-postgres",
+            "--network",
+            "auth-test-network",
+            "-e",
+            "POSTGRES_DB=ci",
+            "-e",
+            "POSTGRES_USER=ci",
+            "-e",
+            "POSTGRES_PASSWORD=ci",
+            "postgres:16",
+        ],
+        check=True,
+    )
+
+    time.sleep(5)
+
     subprocess.run(["docker", "build", "-t", "auth-test", "."], check=True)
 
     subprocess.run(
-        ["docker", "run", "-d", "-p", "8000:8000", "--name", "auth-test", "auth-test"],
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--network",
+            "auth-test-network",
+            "-e",
+            "DATABASE_URL=postgresql+psycopg://ci:ci@auth-test-postgres:5432/ci",
+            "auth-test",
+            "alembic",
+            "upgrade",
+            "head",
+        ],
+        check=True,
+    )
+
+    subprocess.run(
+        [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            "auth-test",
+            "--network",
+            "auth-test-network",
+            "-p",
+            "8000:8000",
+            "-e",
+            "DATABASE_URL=postgresql+psycopg://ci:ci@auth-test-postgres:5432/ci",
+            "auth-test",
+        ],
         check=True,
     )
 
     try:
-        time.sleep(3)
+        time.sleep(5)
 
         response = requests.get("http://localhost:8000/health")
 
@@ -24,3 +78,5 @@ def test_container_health():
 
     finally:
         subprocess.run(["docker", "rm", "-f", "auth-test"], check=False)
+        subprocess.run(["docker", "rm", "-f", "auth-test-postgres"], check=False)
+        subprocess.run(["docker", "network", "rm", "auth-test-network"], check=False)
