@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'auth/**'
+      - 'Auth-Service/**'
       - '.github/workflows/auth-ci.yml'
       - '.github/workflows/_python-service-ci.yml'
   workflow_dispatch:
