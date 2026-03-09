@@ -4,10 +4,7 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-
-load_dotenv()
-
-from auth import models  # noqa: F401
+from auth import models
 from auth.config import get_database_url
 from auth.db import Base
 
