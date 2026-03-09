@@ -1,4 +1,4 @@
-name: Users CI
+name: Lobby CI
 
 on:
   push:
@@ -11,8 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  users-ci:
+  lobby-ci:
     uses: ./.github/workflows/_python-service-ci.yml
     with:
-      service_path: users
-      python_package: users
+      service_path: Lobby-Service
