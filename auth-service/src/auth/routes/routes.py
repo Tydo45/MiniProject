@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pwdlib import PasswordHash
 from pydantic import BaseModel
-from sqlalchemy import create_engine, insert, select
+from sqlalchemy import insert, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
 from auth.config import Settings, get_settings
+from auth.db import get_db
 from auth.models import User
 
 router = APIRouter()
@@ -63,21 +64,19 @@ def health() -> dict[str, str]:
 
 
 @router.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str, str]:  # noqa: B008
-    # TODO: [UNTESTED] Create Test Cases
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> dict[str, str]:
     settings = get_settings()
 
-    engine = create_engine(settings.database_url)
-    SessionLocal = sessionmaker(bind=engine)
+    stmt = select(User).where(User.username == form_data.username)
+    user = db.execute(stmt).scalar_one_or_none()
 
-    with SessionLocal() as db:
-        stmt = select(User).where(User.username == form_data.username)
-        user = db.execute(stmt).scalar_one_or_none()
+    if user is None or not password_hash.verify(form_data.password, user.pass_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        if user is None or not password_hash.verify(form_data.password, user.pass_hash):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        access_token, refresh_token = _create_token_pair(str(user.id), settings)
+    access_token, refresh_token = _create_token_pair(str(user.id), settings)
 
     return {
         "access_token": access_token,
@@ -87,30 +86,28 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str, s
 
 
 @router.post("/create-user")
-async def create_user(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str, str]:  # noqa: B008
-    # TODO: [UNTESTED] Create Test Cases
+async def create_user(
+    form_data: OAuth2PasswordRequestForm = Depends(),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> dict[str, str]:
     settings = get_settings()
 
-    engine = create_engine(settings.database_url)
-    SessionLocal = sessionmaker(bind=engine)
-
-    with SessionLocal() as db:
-        try:
-            insert_stmt = (
-                insert(User)
-                .values(
-                    username=form_data.username,
-                    pass_hash=password_hash.hash(form_data.password),
-                )
-                .returning(User.id)
+    try:
+        insert_stmt = (
+            insert(User)
+            .values(
+                username=form_data.username,
+                pass_hash=password_hash.hash(form_data.password),
             )
-            user_id = db.execute(insert_stmt).scalar_one()
-            db.commit()
-        except IntegrityError as err:
-            db.rollback()
-            raise HTTPException(status_code=409, detail="Username already in use.") from err
+            .returning(User.id)
+        )
+        user_id = db.execute(insert_stmt).scalar_one()
+        db.commit()
+    except IntegrityError as err:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Username already in use.") from err
 
-        access_token, refresh_token = _create_token_pair(str(user_id), settings)
+    access_token, refresh_token = _create_token_pair(str(user_id), settings)
 
     return {
         "access_token": access_token,
@@ -121,7 +118,6 @@ async def create_user(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[
 
 @router.post("/refresh")
 def refresh(request: RefreshTokenRequest) -> dict[str, str]:
-    # TODO: [UNTESTED] Create Test Cases
     settings = get_settings()
 
     try:

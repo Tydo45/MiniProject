@@ -36,7 +36,7 @@ def get_database_url() -> str:
     return get_settings().database_url
 
 
-def get_integration_database_url() -> str:
+def get_environment_database_url() -> str:
     settings = get_settings()
     return settings.test_database_url or settings.database_url
 

@@ -4,18 +4,20 @@ import time
 
 import pytest
 from dotenv import load_dotenv
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from auth.config import get_integration_database_url, reset_settings_cache
+from auth.config import get_environment_database_url, reset_settings_cache
 
 load_dotenv()
 reset_settings_cache()
-database_url = get_integration_database_url()
+database_url = get_environment_database_url()
 
 
 @pytest.fixture(scope="session", autouse=True)
 def postgres_container():
+    subprocess.run(["docker", "rm", "-f", "auth-test-postgres"], check=False)
     subprocess.run(
         [
             "docker",
@@ -63,3 +65,11 @@ def db_session():
         session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture
+def client():
+    from auth.main import app
+
+    with TestClient(app) as test_client:
+        yield test_client
