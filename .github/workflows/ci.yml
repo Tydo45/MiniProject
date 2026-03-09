@@ -1,15 +1,23 @@
-name: CI
+name: Python Service CI
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      service_path:
+        required: true
+        type: string
+      python_package:
+        required: true
+        type: string
 
 jobs:
   ci:
-    name: Lint, Type Check, and Test
+    name: CI
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.service_path }}
 
     steps:
       - name: Checkout repository
@@ -18,8 +26,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: ${{ inputs.service_path }}/pyproject.toml
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
