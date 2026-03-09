@@ -48,12 +48,11 @@ def postgres_container():
     subprocess.run(["docker", "rm", "-f", "auth-test-postgres"], check=False)
 
 
-engine = create_engine(database_url)
-SessionLocal = sessionmaker(bind=engine)
-
-
 @pytest.fixture
 def db_session():
+    engine = create_engine(database_url)
+    SessionLocal = sessionmaker(bind=engine)
+
     connection = engine.connect()
     transaction = connection.begin()
 

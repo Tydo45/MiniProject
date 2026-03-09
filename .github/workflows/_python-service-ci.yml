@@ -8,7 +8,7 @@ on:
         type: string
 
 env:
-  DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+  DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
 
 jobs:
   ci:
