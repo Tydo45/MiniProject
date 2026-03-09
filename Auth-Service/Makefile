@@ -1,4 +1,4 @@
-.PHONY: install test lint type format run
+.PHONY: install lint type test-unit test-integration test-system test check format run
 
 install:
 	pip install -e ".[dev]"
@@ -9,10 +9,16 @@ lint:
 type:
 	mypy -p auth
 
-test:
+test-unit:
 	pytest -m unit
+
+test-integration:
 	pytest -m integration
+
+test-system:
 	pytest -m system
+
+test: test-unit test-integration test-system
 
 check: lint type test
 
