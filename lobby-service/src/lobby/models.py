@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.db import Base
+from lobby.db import Base
 
 
 class GameInvite(Base):

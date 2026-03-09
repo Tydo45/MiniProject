@@ -1,16 +1,15 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
-
-from src.db import Base
-from src import models
 from dotenv import load_dotenv
-import os
+from sqlalchemy import engine_from_config, pool
+
 
 load_dotenv()
+
+from lobby import models  # noqa: F401
+from lobby.config import get_database_url
+from lobby.db import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -32,12 +31,7 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-database_url = os.getenv("DATABASE_URL")
-
-if database_url is None:
-    raise RuntimeError("DATABASE_URL is not set")
-
-config.set_main_option("sqlalchemy.url", database_url)
+config.set_main_option("sqlalchemy.url", get_database_url())
 
 
 def run_migrations_offline() -> None:
