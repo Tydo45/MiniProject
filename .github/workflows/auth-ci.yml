@@ -14,5 +14,4 @@ jobs:
   auth-ci:
     uses: ./.github/workflows/_python-service-ci.yml
     with:
-      service_path: auth
-      python_package: auth
+      service_path: Auth-Service
