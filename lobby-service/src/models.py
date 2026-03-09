@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, DateTime
 from sqlalchemy.dialects.postgresql import UUID
@@ -68,7 +68,7 @@ class GameLobby(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=datetime.now(timezone.utc),
+        default=datetime.now(UTC),
     )
 
     responded_at: Mapped[datetime | None] = mapped_column(
