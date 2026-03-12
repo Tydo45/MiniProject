@@ -1,4 +1,4 @@
-.PHONY: install lint type test-unit test-integration test-system test check format run
+.PHONY: install lint type test-unit test-integration test-system test check format run docker-clean
 
 install:
 	pip install -e ".[dev]"
@@ -40,3 +40,8 @@ clean:
 		.coverage \
 		build \
 		dist
+
+docker-clean:
+	- docker rm -f auth-test
+	- docker rm -f auth-test-postgres
+	- docker network rm lobby-test-network

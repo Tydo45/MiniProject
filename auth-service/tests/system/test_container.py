@@ -4,13 +4,9 @@ import time
 import pytest
 import requests
 
-from auth.config import get_settings
-
 
 @pytest.mark.system
 def test_container_health():
-    settings = get_settings()
-
     subprocess.run(["docker", "network", "create", "auth-test-network"], check=True)
 
     subprocess.run(
@@ -47,7 +43,7 @@ def test_container_health():
             "-e",
             "DATABASE_URL=postgresql+psycopg://ci:ci@auth-test-postgres:5432/ci",
             "-e",
-            f"SECRET_KEY={settings.secret_key}",
+            "SECRET_KEY=ci",
             "auth-test",
             "alembic",
             "upgrade",
@@ -70,7 +66,7 @@ def test_container_health():
             "-e",
             "DATABASE_URL=postgresql+psycopg://ci:ci@auth-test-postgres:5432/ci",
             "-e",
-            f"SECRET_KEY={settings.secret_key}",
+            "SECRET_KEY=ci",
             "auth-test",
         ],
         check=True,

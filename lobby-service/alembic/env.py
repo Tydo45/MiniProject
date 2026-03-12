@@ -1,15 +1,12 @@
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-
-load_dotenv()
-
-from lobby import models  # noqa: F401
+from lobby import models
 from lobby.config import get_database_url
 from lobby.db import Base
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

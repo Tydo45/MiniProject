@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from lobby.routes.routes import router
+from lobby.routes.websockets import router as websocket_router
 
 app = FastAPI(title="auth-service")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(websocket_router)
 
 
 if __name__ == "__main__":

@@ -7,11 +7,11 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from lobby.config import get_integration_database_url, reset_settings_cache
+from lobby.config import get_environment_database_url, reset_settings_cache
 
 load_dotenv()
 reset_settings_cache()
-database_url = get_integration_database_url()
+database_url = get_environment_database_url()
 
 
 @pytest.fixture(scope="session", autouse=True)
