@@ -9,7 +9,7 @@ on:
 
 env:
   DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
-  SECRET_KEY: ci-not-a-secret
+  SECRET_KEY: fake_jwt_secret_key_for_testing_only_7f3a1c9d4e8b2a6f0c1d9e7a5b3c8d2e
 
 jobs:
   ci:
