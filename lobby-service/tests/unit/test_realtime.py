@@ -190,3 +190,25 @@ def test_get_notifier_returns_module_notifier_instance():
     result = realtime_module.get_notifier()
 
     assert result is realtime_module.notifier
+    
+
+@pytest.mark.unit
+async def test_send_to_user_with_invite_response_json_payload(manager, user_id):
+    websocket = make_websocket()
+    manager._connections[user_id].add(websocket)
+
+    payload = {
+        "type": "invite_created",
+        "invite": {
+            "id": str(uuid.uuid4()),
+            "from_player_id": str(uuid.uuid4()),
+            "to_player_id": str(uuid.uuid4()),
+            "is_open": True,
+            "created_at": "2026-03-13T12:00:00+00:00",
+            "responded_at": None,
+        },
+    }
+
+    await manager.send_to_user(user_id, payload)
+
+    websocket.send_json.assert_awaited_once_with(payload)

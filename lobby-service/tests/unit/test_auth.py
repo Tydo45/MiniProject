@@ -13,7 +13,7 @@ import lobby.auth as auth_module
 @pytest.fixture
 def fake_settings():
     return SimpleNamespace(
-        secret_key="6bWlSEJiktuKfgeeo4bd9CfgjhlNKj4HvI+GCy0QUjs=", # FAKE SECRET NOT PROD
+        secret_key="6bWlSEJiktuKfgeeo4bd9CfgjhlNKj4HvI+GCy0QUjs=",  # FAKE SECRET NOT PROD
         algorithm="HS256",
     )
 

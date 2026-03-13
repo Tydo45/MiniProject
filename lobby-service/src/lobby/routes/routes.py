@@ -55,7 +55,7 @@ def list_open_invites(
     Returns:
         list[InviteResponse]: A list of open invites that the user can accept.
     """
-    stmt = select(Invite).where(Invite.to_player_id == user_id)
+    stmt = select(Invite).where(Invite.to_player_id == user_id, Invite.is_open)
     invites = db.execute(stmt).scalars().all()
 
     return [InviteResponse.model_validate(invite) for invite in invites]
@@ -115,14 +115,14 @@ async def send_invite(
     db.add(new_invite)
     db.commit()
     db.refresh(new_invite)
-    
+
     inviteResponse = InviteResponse.model_validate(new_invite)
 
     await notifier.notify_user(
         invite.invitee_id,
         {
             "type": "invite_created",
-            "invite": inviteResponse,
+            "invite": inviteResponse.model_dump(mode="json"),
         },
     )
 
@@ -177,20 +177,20 @@ async def accept_invite(
 
     lobby = Lobby(
         player_id_1=invite.from_player_id,
-        player_2_id=invite.to_player_id,
+        player_id_2=invite.to_player_id,
     )
 
     db.add(lobby)
     db.commit()
     db.refresh(lobby)
-    
+
     lobbyResponse = LobbyResponse.model_validate(lobby)
 
     await notifier.notify_user(
         invite.from_player_id,
         {
             "type": "invite_accepted",
-            "lobby": lobbyResponse,
+            "lobby": lobbyResponse.model_dump(mode="json"),
         },
     )
 
@@ -259,7 +259,7 @@ async def ready(
             getattr(lobby, f"player_id_{opposing_player_num}"),
             {
                 "type": "user_ready",
-                "ReadyResponse": response,
+                "ReadyResponse": response.model_dump(mode="json"),
             },
         )
 

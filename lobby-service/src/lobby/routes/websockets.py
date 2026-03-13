@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
-from lobby.auth import get_current_user_id
+from lobby.auth import get_current_websocket_user_id
 from lobby.realtime import manager
 
 router = APIRouter()
@@ -11,7 +11,7 @@ router = APIRouter()
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    user_id: uuid.UUID = Depends(get_current_websocket_user_id),
 ) -> None:
     """
     Open a websocket connection for realtime lobby events.
