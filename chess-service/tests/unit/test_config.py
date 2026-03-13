@@ -1,5 +1,4 @@
 import pytest
-
 from chess.config import (
     get_database_url,
     get_integration_database_url,

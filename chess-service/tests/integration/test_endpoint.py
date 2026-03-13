@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from chess.main import app
+from chess_service.main import app
 
 client = TestClient(app)
 

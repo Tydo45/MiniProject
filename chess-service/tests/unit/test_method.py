@@ -1,6 +1,6 @@
 import pytest
 
-from chess.routes.routes import health
+from chess_service.routes.routes import health
 
 
 @pytest.mark.unit

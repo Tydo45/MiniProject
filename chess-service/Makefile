@@ -7,7 +7,7 @@ lint:
 	ruff check src tests
 
 type:
-	mypy -p chess
+	mypy -p chess_service
 
 test-unit:
 	pytest -m unit
@@ -27,7 +27,7 @@ format:
 	ruff check src tests --fix
 
 run:
-	uvicorn chess.main:app --reload
+	uvicorn chess_service.main:app --reload
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

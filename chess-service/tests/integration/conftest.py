@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from chess.config import get_integration_database_url, reset_settings_cache
+from chess_service.config import get_integration_database_url, reset_settings_cache
 
 load_dotenv()
 reset_settings_cache()

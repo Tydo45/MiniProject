@@ -1,15 +1,12 @@
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
+from chess_service import models
+from chess_service.config import get_database_url
+from chess_service.db import Base
 
-load_dotenv()
-
-from chess import models
-from chess.config import get_database_url
-from chess.db import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
