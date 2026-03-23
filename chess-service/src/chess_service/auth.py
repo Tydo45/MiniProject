@@ -3,8 +3,12 @@ import uuid
 import jwt
 from fastapi import Depends, HTTPException, WebSocket, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from chess_service.config import get_settings
+from chess_service.db import get_db
+from chess_service.models import Game
 
 security = HTTPBearer()
 
@@ -14,15 +18,6 @@ def _not_authenticated() -> HTTPException:
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
     )
-
-
-def _decode_credentials(
-    credentials: HTTPAuthorizationCredentials | None,
-) -> uuid.UUID:
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise _not_authenticated()
-
-    return decode_user_id_from_token(credentials.credentials)
 
 
 def decode_user_id_from_token(token: str) -> uuid.UUID:
@@ -86,7 +81,10 @@ def get_current_user_id(
     Returns:
         uuid.UUID: Authenticated user ID.
     """
-    return _decode_credentials(credentials)
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise _not_authenticated()
+
+    return decode_user_id_from_token(credentials.credentials)
 
 
 def get_current_websocket_user_id(websocket: WebSocket) -> uuid.UUID:
@@ -99,9 +97,62 @@ def get_current_websocket_user_id(websocket: WebSocket) -> uuid.UUID:
     except ValueError as err:
         raise _not_authenticated() from err
 
-    return _decode_credentials(
+    return get_current_user_id(
         HTTPAuthorizationCredentials(
             scheme=scheme,
             credentials=token,
         )
     )
+
+
+def get_game(
+    game_id: uuid.UUID,
+    db: Session = Depends(get_db),
+) -> Game:
+    stmt = select(Game).where(Game.id == game_id)
+    game = db.execute(stmt).scalar_one_or_none()
+
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Game Id",
+        )
+
+    return game
+
+
+def get_game_require_user_is_player(
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    game: Game = Depends(get_game),
+) -> Game:
+    if user_id not in (game.white_player_id, game.black_player_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not Allowed",
+        )
+    return game
+
+
+def get_game_require_user_has_next_turn(
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    game: Game = Depends(get_game),
+) -> Game:
+    next_ply = game.events[-1].ply + 1 if game.events else 1
+
+    if user_id not in (game.white_player_id, game.black_player_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not Allowed",
+        )
+
+    is_white_turn = next_ply % 2 == 1
+    user_is_white = user_id == game.white_player_id
+    user_is_black = user_id == game.black_player_id
+
+    if (user_is_white and not is_white_turn) or (user_is_black and is_white_turn):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not next to move",
+        )
+
+    return game

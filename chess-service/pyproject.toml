@@ -32,6 +32,7 @@ dev = [
     "ruff>=0.6,<1.0",
     "mypy>=1.11,<2.0",
     "requests>=2.32.5",
+    "pytest-cov",
 ]
 
 [tool.setuptools]
@@ -70,6 +71,9 @@ strict_optional = true
 
 [tool.coverage.run]
 source = ["src"]
+omit = [
+    "tests/system/*"
+]
 
 [tool.coverage.report]
 show_missing = true

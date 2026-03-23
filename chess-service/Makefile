@@ -1,4 +1,4 @@
-.PHONY: install lint type test-unit test-integration test-system test check format run
+.PHONY: install lint type test-unit test-integration test-system test check format run test-cov-report
 
 install:
 	pip install -e ".[dev]"
@@ -40,3 +40,7 @@ clean:
 		.coverage \
 		build \
 		dist
+
+test-cov-report:
+	pytest --cov=. --cov-branch --cov-report=html
+	explorer.exe "$$(wslpath -w htmlcov/index.html)"

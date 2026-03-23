@@ -1,5 +1,6 @@
 import subprocess
 import time
+import uuid
 
 import pytest
 import requests
@@ -7,7 +8,10 @@ import requests
 
 @pytest.mark.system
 def test_container_health():
-    subprocess.run(["docker", "network", "create", "chess-test-network"], check=True)
+    postgres_container_name = f"chess-test-postgres-{uuid.uuid4().hex[:8]}"
+    network = f"chess-test-network-{uuid.uuid4().hex[:8]}"
+
+    subprocess.run(["docker", "network", "create", network], check=True)
 
     subprocess.run(
         [
@@ -15,9 +19,9 @@ def test_container_health():
             "run",
             "-d",
             "--name",
-            "chess-test-postgres",
+            postgres_container_name,
             "--network",
-            "chess-test-network",
+            network,
             "-e",
             "POSTGRES_DB=ci",
             "-e",
@@ -39,9 +43,11 @@ def test_container_health():
             "run",
             "--rm",
             "--network",
-            "chess-test-network",
+            network,
             "-e",
-            "DATABASE_URL=postgresql+psycopg://ci:ci@chess-test-postgres:5432/ci",
+            f"DATABASE_URL=postgresql+psycopg://ci:ci@{postgres_container_name}:5432/ci",
+            "-e",
+            "SECRET_KEY=ci",
             "chess-test",
             "alembic",
             "upgrade",
@@ -58,11 +64,13 @@ def test_container_health():
             "--name",
             "chess-test",
             "--network",
-            "chess-test-network",
+            network,
             "-p",
             "8000:8000",
             "-e",
-            "DATABASE_URL=postgresql+psycopg://ci:ci@chess-test-postgres:5432/ci",
+            f"DATABASE_URL=postgresql+psycopg://ci:ci@{postgres_container_name}:5432/ci",
+            "-e",
+            "SECRET_KEY=ci",
             "chess-test",
         ],
         check=True,
@@ -78,5 +86,5 @@ def test_container_health():
 
     finally:
         subprocess.run(["docker", "rm", "-f", "chess-test"], check=False)
-        subprocess.run(["docker", "rm", "-f", "chess-test-postgres"], check=False)
-        subprocess.run(["docker", "network", "rm", "chess-test-network"], check=False)
+        subprocess.run(["docker", "rm", "-f", postgres_container_name], check=False)
+        subprocess.run(["docker", "network", "rm", network], check=False)

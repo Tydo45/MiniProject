@@ -7,10 +7,8 @@ client = TestClient(app)
 
 
 @pytest.mark.integration
-def test_health(db_session):
+def test_health():
     response = client.get("/health")
-
-    print(db_session)
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

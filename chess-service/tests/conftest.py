@@ -1,28 +1,29 @@
 import os
 import subprocess
 import time
+import uuid
 
 import pytest
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from chess_service.config import get_integration_database_url, reset_settings_cache
+from chess_service.config import get_environment_database_url, reset_settings_cache
 
-load_dotenv()
 reset_settings_cache()
-database_url = get_integration_database_url()
+database_url = get_environment_database_url()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=False)
 def postgres_container():
+    postgres_container_name = f"chess-test-postgres-{uuid.uuid4().hex[:8]}"
+
     subprocess.run(
         [
             "docker",
             "run",
             "-d",
             "--name",
-            "chess-test-postgres",
+            postgres_container_name,
             "-p",
             "5432:5432",
             "-e",
@@ -42,9 +43,9 @@ def postgres_container():
     alembic_env["DATABASE_URL"] = database_url
     subprocess.run(["alembic", "upgrade", "head"], check=True, env=alembic_env)
 
-    yield
+    yield postgres_container_name
 
-    subprocess.run(["docker", "rm", "-f", "chess-test-postgres"], check=False)
+    subprocess.run(["docker", "rm", "-f", postgres_container_name], check=False)
 
 
 @pytest.fixture
