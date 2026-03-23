@@ -135,7 +135,7 @@ def get_game_require_user_is_player(
 
 def get_game_require_user_has_next_turn(
     user_id: uuid.UUID = Depends(get_current_user_id),
-    game: Game = Depends(get_game),
+    game: Game = Depends(get_game_require_user_is_player),
 ) -> Game:
     next_ply = game.events[-1].ply + 1 if game.events else 1
 

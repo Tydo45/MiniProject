@@ -89,11 +89,12 @@ async def move(
 
 
 @router.post("/games/{game_id}/draw")
-def draw(
+async def draw(
     game_id: uuid.UUID,  # Needed for route, required by get_game_require_user_has_next_turn
     user_id: uuid.UUID = Depends(get_current_user_id),
     game: Game = Depends(get_game_require_user_has_next_turn),
     db: Session = Depends(get_db),
+    notifier: RealtimeNotifier = Depends(get_notifier),
 ) -> None:
     """
     Request a Draw.
@@ -108,8 +109,116 @@ def draw(
     Returns:
         None.
     """
-    # TODO:
-    ...
+    if game.draw_offered_by:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Draw offer awaiting response",
+        )
+
+    game.draw_offered_by = user_id
+    db.commit()
+    db.refresh(game)
+
+    opposing_player_id = (
+        game.black_player_id if game.black_player_id != user_id else game.white_player_id
+    )
+
+    await notifier.notify_user(
+        opposing_player_id,
+        {
+            "type": "draw_proposed",
+            "gameId": str(game.id),
+        },
+    )
+
+
+@router.post("/games/{game_id}/draw/accept")
+async def accept_draw(
+    game_id: uuid.UUID,  # Needed for route, required by get_game_require_user_is_player
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    game: Game = Depends(get_game_require_user_is_player),
+    db: Session = Depends(get_db),
+    notifier: RealtimeNotifier = Depends(get_notifier),
+) -> None:
+    """
+    Accept a draw request.
+
+    Requires a valid JWT. Requires User to be part of the Game and
+    user is next to move.
+
+    Args:
+        user_id: Authenticated user ID extracted from JWT.
+        db: SQLAlchemy database session.
+
+    Returns:
+        None.
+    """
+    if not game.draw_offered_by or game.draw_offered_by == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Draw not Offered by Opponent",
+        )
+
+    opposing_player_id = (
+        game.black_player_id if game.black_player_id != user_id else game.white_player_id
+    )
+
+    game.is_draw = True
+    game.draw_offered_by = None
+    db.commit()
+    db.refresh(game)
+
+    await notifier.notify_user(
+        opposing_player_id,
+        {
+            "type": "draw_accepted",
+            "gameId": str(game.id),
+        },
+    )
+
+
+@router.post("/games/{game_id}/draw/decline")
+async def decline_draw(
+    game_id: uuid.UUID,  # Needed for route, required by get_game_require_user_is_player
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    game: Game = Depends(get_game_require_user_is_player),
+    db: Session = Depends(get_db),
+    notifier: RealtimeNotifier = Depends(get_notifier),
+) -> None:
+    """
+    Decline a draw request.
+
+    Requires a valid JWT. Requires User to be part of the Game and
+    user is next to move.
+
+    Args:
+        user_id: Authenticated user ID extracted from JWT.
+        db: SQLAlchemy database session.
+
+    Returns:
+        None.
+    """
+    if not game.draw_offered_by or game.draw_offered_by == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Draw not Offered by Opponent",
+        )
+
+    opposing_player_id = (
+        game.black_player_id if game.black_player_id != user_id else game.white_player_id
+    )
+
+    game.draw_offered_by = None
+    db.commit()
+    db.refresh(game)
+
+    await notifier.notify_user(
+        opposing_player_id,
+        {
+            "type": "draw_declined",
+            "gameId": str(game.id),
+        },
+    )
 
 
 @router.post("/games/{game_id}/resign")

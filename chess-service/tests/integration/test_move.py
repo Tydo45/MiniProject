@@ -1,73 +1,16 @@
 import uuid
 
-import jwt
 import pytest
+from conftest import add_event, create_game, make_auth_headers, make_token
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from starlette.testclient import WebSocketDenialResponse
 
-from chess_service.config import get_settings
 from chess_service.db import SessionLocal
-from chess_service.main import app
-from chess_service.models import Game, GameEvent
+from chess_service.models import GameEvent
 from chess_service.realtime import manager
 
 pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-def client(postgres_container: str) -> TestClient:  # type: ignore
-    del postgres_container
-    with TestClient(app) as test_client:
-        yield test_client
-
-
-@pytest.fixture(autouse=True)
-def clear_realtime_connections() -> None: # type: ignore
-    manager._connections.clear()
-    yield
-    manager._connections.clear()
-
-
-def make_auth_headers(user_id: uuid.UUID) -> dict[str, str]:
-    return {"Authorization": f"Bearer {make_token({'sub': str(user_id)})}"}
-
-
-def make_token(payload: dict[str, str]) -> str:
-    settings = get_settings()
-    return jwt.encode(
-        payload,
-        settings.secret_key,
-        algorithm=settings.algorithm,
-    )
-
-
-def create_game(
-    white_player_id: uuid.UUID,
-    black_player_id: uuid.UUID,
-) -> Game:
-    with SessionLocal() as session:
-        game = Game(
-            white_player_id=white_player_id,
-            black_player_id=black_player_id,
-        )
-        session.add(game)
-        session.commit()
-        session.refresh(game)
-        return game
-
-
-def add_event(game_id: uuid.UUID, ply: int, uci_move: str) -> GameEvent:
-    with SessionLocal() as session:
-        event = GameEvent(
-            game_id=game_id,
-            ply=ply,
-            uci_move=uci_move,
-        )
-        session.add(event)
-        session.commit()
-        session.refresh(event)
-        return event
 
 
 def get_game_events(game_id: uuid.UUID) -> list[GameEvent]:

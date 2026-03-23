@@ -41,6 +41,11 @@ class Game(Base):
         nullable=True,
     )
 
+    draw_offered_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+    )
+
     is_draw: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
