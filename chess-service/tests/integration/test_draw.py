@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from conftest import add_event, create_game, get_game, make_auth_headers
+from conftest import add_event, get_game, make_auth_headers
 from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.integration
@@ -58,6 +58,7 @@ def test_draw_endpoints_reject_unknown_game_id(
 def test_draw_endpoints_reject_non_player(
     client: TestClient,
     path_suffix: str,
+    create_game,
 ) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
@@ -74,7 +75,7 @@ def test_draw_endpoints_reject_non_player(
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=False)
 
 
-def test_draw_rejects_wrong_turn(client: TestClient) -> None:
+def test_draw_rejects_wrong_turn(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -89,7 +90,7 @@ def test_draw_rejects_wrong_turn(client: TestClient) -> None:
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=False)
 
 
-def test_draw_allows_white_to_offer_on_initial_position(client: TestClient) -> None:
+def test_draw_allows_white_to_offer_on_initial_position(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -104,7 +105,7 @@ def test_draw_allows_white_to_offer_on_initial_position(client: TestClient) -> N
     assert_game_draw_state(game.id, draw_offered_by=white_player_id, is_draw=False)
 
 
-def test_draw_allows_black_to_offer_after_white_moves(client: TestClient) -> None:
+def test_draw_allows_black_to_offer_after_white_moves(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -120,7 +121,7 @@ def test_draw_allows_black_to_offer_after_white_moves(client: TestClient) -> Non
     assert_game_draw_state(game.id, draw_offered_by=black_player_id, is_draw=False)
 
 
-def test_draw_rejects_second_offer_while_one_is_pending(client: TestClient) -> None:
+def test_draw_rejects_second_offer_while_one_is_pending(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -141,7 +142,7 @@ def test_draw_rejects_second_offer_while_one_is_pending(client: TestClient) -> N
     assert_game_draw_state(game.id, draw_offered_by=white_player_id, is_draw=False)
 
 
-def test_draw_without_connected_sockets_still_succeeds(client: TestClient) -> None:
+def test_draw_without_connected_sockets_still_succeeds(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -155,7 +156,7 @@ def test_draw_without_connected_sockets_still_succeeds(client: TestClient) -> No
     assert_game_draw_state(game.id, draw_offered_by=white_player_id, is_draw=False)
 
 
-def test_draw_notifies_only_the_opponent_over_websocket(client: TestClient) -> None:
+def test_draw_notifies_only_the_opponent_over_websocket(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -177,7 +178,7 @@ def test_draw_notifies_only_the_opponent_over_websocket(client: TestClient) -> N
             assert white_ws.receive_json() == {"type": "pong"}
 
 
-def test_draw_notifies_all_open_sockets_for_the_opponent(client: TestClient) -> None:
+def test_draw_notifies_all_open_sockets_for_the_opponent(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -200,7 +201,7 @@ def test_draw_notifies_all_open_sockets_for_the_opponent(client: TestClient) -> 
             assert black_ws_two.receive_json() == expected_message
 
 
-def test_accept_draw_marks_game_drawn_and_clears_offer(client: TestClient) -> None:
+def test_accept_draw_marks_game_drawn_and_clears_offer(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -219,7 +220,7 @@ def test_accept_draw_marks_game_drawn_and_clears_offer(client: TestClient) -> No
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=True)
 
 
-def test_accept_draw_rejects_when_no_offer_is_pending(client: TestClient) -> None:
+def test_accept_draw_rejects_when_no_offer_is_pending(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -234,7 +235,7 @@ def test_accept_draw_rejects_when_no_offer_is_pending(client: TestClient) -> Non
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=False)
 
 
-def test_accept_draw_rejects_the_player_who_made_the_offer(client: TestClient) -> None:
+def test_accept_draw_rejects_the_player_who_made_the_offer(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -253,7 +254,7 @@ def test_accept_draw_rejects_the_player_who_made_the_offer(client: TestClient) -
     assert_game_draw_state(game.id, draw_offered_by=white_player_id, is_draw=False)
 
 
-def test_accept_draw_notifies_the_original_offerer(client: TestClient) -> None:
+def test_accept_draw_notifies_the_original_offerer(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -274,7 +275,9 @@ def test_accept_draw_notifies_the_original_offerer(client: TestClient) -> None:
         assert white_ws.receive_json() == expected_message
 
 
-def test_accept_draw_notifies_all_open_sockets_for_the_offerer(client: TestClient) -> None:
+def test_accept_draw_notifies_all_open_sockets_for_the_offerer(
+    client: TestClient, create_game
+) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -301,7 +304,9 @@ def test_accept_draw_notifies_all_open_sockets_for_the_offerer(client: TestClien
             assert white_ws_two.receive_json() == expected_message
 
 
-def test_decline_draw_clears_offer_without_marking_game_drawn(client: TestClient) -> None:
+def test_decline_draw_clears_offer_without_marking_game_drawn(
+    client: TestClient, create_game
+) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -320,7 +325,7 @@ def test_decline_draw_clears_offer_without_marking_game_drawn(client: TestClient
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=False)
 
 
-def test_decline_draw_rejects_when_no_offer_is_pending(client: TestClient) -> None:
+def test_decline_draw_rejects_when_no_offer_is_pending(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -335,7 +340,9 @@ def test_decline_draw_rejects_when_no_offer_is_pending(client: TestClient) -> No
     assert_game_draw_state(game.id, draw_offered_by=None, is_draw=False)
 
 
-def test_decline_draw_rejects_the_player_who_made_the_offer(client: TestClient) -> None:
+def test_decline_draw_rejects_the_player_who_made_the_offer(
+    client: TestClient, create_game
+) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -354,7 +361,7 @@ def test_decline_draw_rejects_the_player_who_made_the_offer(client: TestClient) 
     assert_game_draw_state(game.id, draw_offered_by=white_player_id, is_draw=False)
 
 
-def test_decline_draw_notifies_the_original_offerer(client: TestClient) -> None:
+def test_decline_draw_notifies_the_original_offerer(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -375,7 +382,9 @@ def test_decline_draw_notifies_the_original_offerer(client: TestClient) -> None:
         assert white_ws.receive_json() == expected_message
 
 
-def test_decline_draw_notifies_all_open_sockets_for_the_offerer(client: TestClient) -> None:
+def test_decline_draw_notifies_all_open_sockets_for_the_offerer(
+    client: TestClient, create_game
+) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)

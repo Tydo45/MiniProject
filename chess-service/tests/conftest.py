@@ -103,19 +103,27 @@ def make_auth_headers(user_id: uuid.UUID) -> dict[str, str]:
     return {"Authorization": f"Bearer {make_token({'sub': str(user_id)})}"}
 
 
-def create_game(
-    white_player_id: uuid.UUID,
-    black_player_id: uuid.UUID,
-) -> Game:
-    with SessionLocal() as session:
-        game = Game(
-            white_player_id=white_player_id,
-            black_player_id=black_player_id,
+@pytest.fixture
+def create_game(client: TestClient):
+    def _create_game(
+        white_player_id: uuid.UUID,
+        black_player_id: uuid.UUID,
+        *,
+        requester_id: uuid.UUID | None = None,
+    ) -> Game:
+        response = client.post(
+            "/games/create",
+            json={
+                "white_player_id": str(white_player_id),
+                "black_player_id": str(black_player_id),
+            },
+            headers=make_auth_headers(requester_id or white_player_id),
         )
-        session.add(game)
-        session.commit()
-        session.refresh(game)
-        return game
+        assert response.status_code == 200
+
+        return get_game(uuid.UUID(response.json()["id"]))
+
+    return _create_game
 
 
 def add_event(game_id: uuid.UUID, ply: int, uci_move: str) -> GameEvent:

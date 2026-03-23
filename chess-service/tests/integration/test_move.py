@@ -1,7 +1,7 @@
 import uuid
 
 import pytest
-from conftest import add_event, create_game, make_auth_headers, make_token
+from conftest import add_event, make_auth_headers, make_token
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from starlette.testclient import WebSocketDenialResponse
@@ -34,7 +34,7 @@ def assert_websocket_denied(
     assert response.json() == expected_body
 
 
-def test_move_creates_first_event_for_white(client: TestClient) -> None:
+def test_move_creates_first_event_for_white(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -57,7 +57,7 @@ def test_move_creates_first_event_for_white(client: TestClient) -> None:
     assert events[0].uci_move == "e2e4"
 
 
-def test_move_creates_second_event_for_black(client: TestClient) -> None:
+def test_move_creates_second_event_for_black(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -80,7 +80,7 @@ def test_move_creates_second_event_for_black(client: TestClient) -> None:
     assert [event.uci_move for event in events] == ["e2e4", "e7e5"]
 
 
-def test_move_rejects_illegal_move_for_position(client: TestClient) -> None:
+def test_move_rejects_illegal_move_for_position(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -107,7 +107,7 @@ def test_move_rejects_unknown_game_id(client: TestClient) -> None:
     assert response.json() == {"detail": "Invalid Game Id"}
 
 
-def test_move_rejects_non_player(client: TestClient) -> None:
+def test_move_rejects_non_player(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     outsider_id = uuid.uuid4()
@@ -124,7 +124,7 @@ def test_move_rejects_non_player(client: TestClient) -> None:
     assert get_game_events(game.id) == []
 
 
-def test_move_rejects_wrong_turn(client: TestClient) -> None:
+def test_move_rejects_wrong_turn(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -171,7 +171,7 @@ def test_move_rejects_missing_uci_field(client: TestClient) -> None:
     assert response.status_code == 400
 
 
-def test_move_rejects_malformed_uci_string(client: TestClient) -> None:
+def test_move_rejects_malformed_uci_string(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -244,7 +244,9 @@ def test_websocket_rejects_token_with_invalid_subject(client: TestClient) -> Non
     )
 
 
-def test_move_notifies_both_connected_players_over_websocket(client: TestClient) -> None:
+def test_move_notifies_both_connected_players_over_websocket(
+    client: TestClient, create_game
+) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -265,7 +267,7 @@ def test_move_notifies_both_connected_players_over_websocket(client: TestClient)
             assert black_ws.receive_json() == expected_message
 
 
-def test_move_notifies_all_open_sockets_for_same_user(client: TestClient) -> None:
+def test_move_notifies_all_open_sockets_for_same_user(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
@@ -292,7 +294,7 @@ def test_move_notifies_all_open_sockets_for_same_user(client: TestClient) -> Non
                 assert black_ws.receive_json() == expected_message
 
 
-def test_move_without_connected_sockets_still_succeeds(client: TestClient) -> None:
+def test_move_without_connected_sockets_still_succeeds(client: TestClient, create_game) -> None:
     white_player_id = uuid.uuid4()
     black_player_id = uuid.uuid4()
     game = create_game(white_player_id, black_player_id)
