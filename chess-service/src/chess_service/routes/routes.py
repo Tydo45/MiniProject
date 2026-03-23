@@ -13,6 +13,7 @@ from chess_service.auth import (
 )
 from chess_service.db import get_db
 from chess_service.models import Game, GameEvent
+from chess_service.realtime import RealtimeNotifier, get_notifier
 
 router = APIRouter()
 
@@ -27,13 +28,14 @@ class moveRequest(BaseModel):
 
 
 @router.post("/games/{game_id}/move")
-def move(
+async def move(
     move: moveRequest,
     user_id: uuid.UUID = Depends(
         get_current_user_id
     ),  # Force Valid User ID, passed to get_game_require_user_has_next_turn
     game: Game = Depends(get_game_require_user_has_next_turn),  # Force Valid Game ID & Next Turn
     db: Session = Depends(get_db),
+    notifier: RealtimeNotifier = Depends(get_notifier),
 ) -> GameEventResponse:
     """
     Make a move for a User.
@@ -73,6 +75,15 @@ def move(
     db.add(gameEvent)
     db.commit()
     db.refresh(gameEvent)
+
+    for player_id in [game.white_player_id, game.black_player_id]:
+        await notifier.notify_user(
+            player_id,
+            {
+                "type": "game_updated",
+                "gameId": str(game.id),
+            },
+        )
 
     return GameEventResponse.model_validate(gameEvent)
 

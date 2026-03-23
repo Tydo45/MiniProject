@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from chess_service.routes.routes import router
+from chess_service.routes.websockets import router as websocket_router
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(websocket_router)
 
 
 if __name__ == "__main__":
