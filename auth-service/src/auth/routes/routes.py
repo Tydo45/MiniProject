@@ -19,6 +19,12 @@ password_hash = PasswordHash.recommended()
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+    
+
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
 
 
 def _create_jwt_token(
@@ -67,7 +73,7 @@ def health() -> dict[str, str]:
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
-) -> dict[str, str]:
+) -> LoginResponse:
     settings = get_settings()
 
     stmt = select(User).where(User.username == form_data.username)
@@ -78,18 +84,18 @@ async def login(
 
     access_token, refresh_token = _create_token_pair(str(user.id), settings)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return LoginResponse(
+        access_token = access_token,
+        refresh_token = refresh_token,
+        token_type = "bearer",
+    )
 
 
 @router.post("/create-user")
 async def create_user(
     form_data: OAuth2PasswordRequestForm = Depends(),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
-) -> dict[str, str]:
+) -> LoginResponse:
     settings = get_settings()
 
     try:
@@ -109,15 +115,15 @@ async def create_user(
 
     access_token, refresh_token = _create_token_pair(str(user_id), settings)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return LoginResponse(
+        access_token = access_token,
+        refresh_token = refresh_token,
+        token_type = "bearer",
+    )
 
 
 @router.post("/refresh")
-def refresh(request: RefreshTokenRequest) -> dict[str, str]:
+def refresh(request: RefreshTokenRequest) -> LoginResponse:
     settings = get_settings()
 
     try:
@@ -136,8 +142,8 @@ def refresh(request: RefreshTokenRequest) -> dict[str, str]:
 
     access_token, refresh_token = _create_token_pair(str(subject), settings)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    return LoginResponse(
+        access_token = access_token,
+        refresh_token = refresh_token,
+        token_type = "bearer",
+    )
