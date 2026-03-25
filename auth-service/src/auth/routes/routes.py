@@ -19,7 +19,7 @@ password_hash = PasswordHash.recommended()
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
-    
+
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -85,9 +85,9 @@ async def login(
     access_token, refresh_token = _create_token_pair(str(user.id), settings)
 
     return LoginResponse(
-        access_token = access_token,
-        refresh_token = refresh_token,
-        token_type = "bearer",
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
     )
 
 
@@ -116,9 +116,9 @@ async def create_user(
     access_token, refresh_token = _create_token_pair(str(user_id), settings)
 
     return LoginResponse(
-        access_token = access_token,
-        refresh_token = refresh_token,
-        token_type = "bearer",
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
     )
 
 
@@ -143,7 +143,7 @@ def refresh(request: RefreshTokenRequest) -> LoginResponse:
     access_token, refresh_token = _create_token_pair(str(subject), settings)
 
     return LoginResponse(
-        access_token = access_token,
-        refresh_token = refresh_token,
-        token_type = "bearer",
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
     )
