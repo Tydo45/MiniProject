@@ -91,7 +91,7 @@ async def login(
     )
 
 
-@router.post("/create-user")
+@router.post("/user")
 async def create_user(
     form_data: OAuth2PasswordRequestForm = Depends(),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
