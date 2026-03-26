@@ -13,5 +13,64 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
 
+  auth-service:
+    build: ./auth-service
+    working_dir: /app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn  auth.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./auth-service:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/auth_db
+    depends_on:
+      - postgres
+
+  lobby-service:
+    build: ./lobby-service
+    working_dir: /app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn lobby.main:app --host 0.0.0.0 --port 8001 --reload"
+    volumes:
+      - ./lobby-service:/app
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/lobby_db
+    depends_on:
+      - postgres
+
+  chess-service:
+    build: ./chess-service
+    working_dir: /app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn chess_service.main:app --host 0.0.0.0 --port 8002 --reload"
+    volumes:
+      - ./chess-service:/app
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/chess_db
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - auth-service
+      - lobby-service
+      - chess-service
+
 volumes:
   postgres_data:
