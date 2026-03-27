@@ -4,6 +4,12 @@ export type LoginResponse = {
   token_type: string;
 };
 
+export type JwtPayload = {
+  sub: string;
+  typ?: string;
+  exp?: number;
+};
+
 export type RefreshTokenRequest = {
   refresh_token: string;
 };

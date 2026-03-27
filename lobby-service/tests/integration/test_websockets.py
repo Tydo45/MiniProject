@@ -55,6 +55,20 @@ def test_websocket_accepts_valid_token_and_replies_to_ping(
 
 
 @pytest.mark.integration
+def test_websocket_accepts_valid_query_param_token_and_replies_to_ping(
+    websocket_client: TestClient,
+    ws_auth_headers,
+) -> None:
+    user_id = make_uuid(101)
+    token = ws_auth_headers(user_id)["Authorization"].split(" ", 1)[1]
+
+    with websocket_client.websocket_connect(f"/ws?token={token}") as websocket:
+        websocket.send_text("ping")
+
+        assert websocket.receive_json() == {"type": "pong"}
+
+
+@pytest.mark.integration
 def test_websocket_disconnect_removes_user_from_manager(
     websocket_client: TestClient,
     ws_auth_headers,

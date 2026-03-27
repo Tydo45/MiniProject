@@ -190,7 +190,7 @@ def test_get_notifier_returns_module_notifier_instance():
     result = realtime_module.get_notifier()
 
     assert result is realtime_module.notifier
-    
+
 
 @pytest.mark.unit
 async def test_send_to_user_with_invite_response_json_payload(manager, user_id):

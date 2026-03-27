@@ -12,13 +12,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   auth-service:
     build: ./auth-service
     working_dir: /app
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn  auth.main:app --host 0.0.0.0 --port 8000 --reload"
+             uvicorn auth.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./auth-service:/app
     ports:
@@ -26,7 +32,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/auth_db
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   lobby-service:
     build: ./lobby-service
@@ -41,7 +48,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/lobby_db
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   chess-service:
     build: ./chess-service
@@ -56,7 +64,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/chess_db
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   frontend:
     build: ./frontend

@@ -1,5 +1,7 @@
 // src/api/auth.ts
-import type { Credentials, LoginResponse } from "../types/auth";
+import type { Credentials, JwtPayload, LoginResponse } from "../types/auth";
+
+const AUTH_API_BASE = "http://localhost:8000";
 
 function toFormBody(credentials: Credentials): URLSearchParams {
   const body = new URLSearchParams();
@@ -8,10 +10,41 @@ function toFormBody(credentials: Credentials): URLSearchParams {
   return body;
 }
 
+function decodeBase64Url(segment: string): string {
+  const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  return atob(padded);
+}
+
+export function getStoredAccessToken(): string | null {
+  return localStorage.getItem("access_token");
+}
+
+export function decodeJwtPayload(token: string): JwtPayload | null {
+  const [, payload] = token.split(".");
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeBase64Url(payload)) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+export function getCurrentUserIdFromToken(): string | null {
+  const token = getStoredAccessToken();
+  const payload = token ? decodeJwtPayload(token) : null;
+
+  return typeof payload?.sub === "string" ? payload.sub : null;
+}
+
 export async function login(
   credentials: Credentials,
 ): Promise<LoginResponse> {
-  const res = await fetch("http://localhost:8000/token", {
+  const res = await fetch(`${AUTH_API_BASE}/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -20,7 +53,7 @@ export async function login(
   });
 
   if (!res.ok) {
-    const data = await res.json()
+    const data = await res.json();
     throw new Error(data.detail);
   }
 
@@ -30,7 +63,7 @@ export async function login(
 export async function createUser(
   credentials: Credentials,
 ): Promise<LoginResponse> {
-  const res = await fetch("http://localhost:8000/user", {
+  const res = await fetch(`${AUTH_API_BASE}/user`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -39,7 +72,7 @@ export async function createUser(
   });
 
   if (!res.ok) {
-    const data = await res.json()
+    const data = await res.json();
     throw new Error(data.detail);
   }
 
