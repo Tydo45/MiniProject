@@ -18,7 +18,7 @@ import type {
   OpenLobbyResponse,
 } from "../types/lobby";
 import type { GameResponse } from "../types/game";
-import "../LobbyPage.css";
+import "../styles/LobbyPage.css";
 
 const ACTIVE_LOBBY_STORAGE_KEY = "active_lobby";
 const SOCKET_RECONNECT_DELAY_MS = 3000;

@@ -11,7 +11,7 @@ import {
   resign,
 } from "../api/chess";
 import type { GameEventResponse, GameResponse, GameSocketMessage } from "../types/game";
-import "./GamePage.css";
+import "../styles/GamePage.css";
 
 const SOCKET_RECONNECT_DELAY_MS = 3000;
 
@@ -539,12 +539,19 @@ export default function GamePage() {
     if (game.is_draw) {
       resultLabel = "Draw";
       resultSub = "The game ended in a draw.";
-    } else if (game.winner_player_id === currentUserId) {
-      resultLabel = "You won!";
-      resultSub = `Winner: ${shortId(game.winner_player_id)}`;
     } else {
-      resultLabel = "You lost.";
-      resultSub = `Winner: ${shortId(game.winner_player_id!)}`;
+      const winnerId = game.winner_player_id;
+
+      if (!winnerId) {
+        resultLabel = "Game over";
+        resultSub = "Winner unavailable.";
+      } else if (winnerId === currentUserId) {
+        resultLabel = "You won!";
+        resultSub = `Winner: ${shortId(winnerId)}`;
+      } else {
+        resultLabel = "You lost.";
+        resultSub = `Winner: ${shortId(winnerId)}`;
+      }
     }
 
     return (

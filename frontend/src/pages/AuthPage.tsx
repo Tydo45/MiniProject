@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createUser, login } from "../api/auth";
 import type { LoginResponse } from "../types/auth";
-import "../AuthPage.css";
+import "../styles/AuthPage.css";
 
 type AuthMode = "login" | "register";
 
