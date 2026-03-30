@@ -1,4 +1,4 @@
-.PHONY: dev down logs
+.PHONY: dev down logs deploy
 
 dev:
 	docker compose up --build
@@ -8,3 +8,6 @@ down:
 
 logs:
 	docker compose logs -f
+
+deploy:
+	./k8s/deploy.sh

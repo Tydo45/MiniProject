@@ -43,3 +43,9 @@ jobs:
           name: frontend-build
           path: frontend/dist
           retention-days: 7
+
+  build-and-push:
+    uses: ./.github/workflows/build-push.yml
+    with:
+      service_path: frontend
+      image_name: frontend
