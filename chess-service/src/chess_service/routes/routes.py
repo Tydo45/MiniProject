@@ -11,6 +11,7 @@ from chess_service.auth import (
     get_current_user_id,
     get_game_require_user_has_next_turn,
     get_game_require_user_is_player,
+    verify_service_token,
 )
 from chess_service.db import get_db
 from chess_service.models import Game, GameEvent
@@ -64,7 +65,7 @@ class CreateGameRequest(BaseModel):
 @router.post("/games/create")
 def create_game(
     createGameRequest: CreateGameRequest,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    _: None = Depends(verify_service_token),
     db: Session = Depends(get_db),
 ) -> GameResponse:
     """

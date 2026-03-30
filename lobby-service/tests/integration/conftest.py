@@ -15,10 +15,21 @@ from lobby.config import get_environment_database_url, get_settings, reset_setti
 from lobby.db import get_db
 from lobby.main import app
 from lobby.realtime import get_notifier, manager
+from lobby.routes.routes import get_chess_service_client
 
 load_dotenv()
 reset_settings_cache()
 database_url = get_environment_database_url()
+
+
+FAKE_GAME_ID = uuid.UUID("00000000-0000-0000-0000-000000009999")
+
+
+class FakeChessServiceClient:
+    async def create_game(
+        self, white_player_id: uuid.UUID, black_player_id: uuid.UUID
+    ) -> uuid.UUID:
+        return FAKE_GAME_ID
 
 
 class FakeNotifier:
@@ -93,6 +104,7 @@ def client(db_session: Session, fake_notifier: FakeNotifier) -> Generator[TestCl
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_notifier] = lambda: fake_notifier
+    app.dependency_overrides[get_chess_service_client] = lambda: FakeChessServiceClient()
 
     try:
         with TestClient(app) as test_client:
@@ -108,6 +120,7 @@ def websocket_client(db_session: Session) -> Generator[TestClient, None, None]:
 
     manager._connections.clear()
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_chess_service_client] = lambda: FakeChessServiceClient()
 
     try:
         with TestClient(app) as test_client:

@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     )
     refresh_token_expire_days: int = Field(default=7, validation_alias="REFRESH_TOKEN_EXPIRE_DAYS")
 
+    allowed_services: list[str] = Field(default=[], validation_alias="ALLOWED_SERVICES")
+
     model_config = SettingsConfigDict(
         env_file=".env",  # Auto-load .env
         extra="ignore",

@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+from conftest import FAKE_GAME_ID
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from starlette.testclient import WebSocketDenialResponse
@@ -174,13 +175,13 @@ def test_ready_delivers_event_to_connected_opponent(
         )
 
         assert response.status_code == 200
-        assert response.json() == {"game_id": None, "both_ready": True}
+        assert response.json() == {"game_id": str(FAKE_GAME_ID), "both_ready": True}
 
         message = websocket.receive_json()
         assert message == {
             "type": "user_ready",
             "ReadyResponse": {
-                "game_id": None,
+                "game_id": str(FAKE_GAME_ID),
                 "both_ready": True,
             },
         }

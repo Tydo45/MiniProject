@@ -105,6 +105,44 @@ def get_current_websocket_user_id(websocket: WebSocket) -> uuid.UUID:
     )
 
 
+def verify_service_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> None:
+    """
+    Validate that the bearer token is a service token (type == "service").
+
+    Raises:
+        HTTPException: If the token is missing, invalid, expired, or not a service token.
+    """
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise _not_authenticated()
+
+    settings = get_settings()
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+        )
+    except jwt.ExpiredSignatureError as err:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+        ) from err
+    except jwt.InvalidTokenError as err:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        ) from err
+
+    if payload.get("type") != "service":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Service token required",
+        )
+
+
 def get_game(
     game_id: uuid.UUID,
     db: Session = Depends(get_db),

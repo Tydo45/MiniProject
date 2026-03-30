@@ -38,7 +38,7 @@ def _create_jwt_token(
     return jwt.encode(
         {
             "sub": subject,
-            "typ": token_type,
+            "type": token_type,
             "exp": datetime.now(UTC) + expires_delta,
         },
         secret_key,
@@ -46,10 +46,10 @@ def _create_jwt_token(
     )
 
 
-def _create_token_pair(subject: str, settings: Settings) -> tuple[str, str]:
+def _create_token_pair(subject: str, settings: Settings, token_type: str) -> tuple[str, str]:
     access_token = _create_jwt_token(
         subject=subject,
-        token_type="access",
+        token_type=token_type,
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
         secret_key=settings.secret_key,
         algorithm=settings.algorithm,
@@ -82,11 +82,43 @@ async def login(
     if user is None or not password_hash.verify(form_data.password, user.pass_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token, refresh_token = _create_token_pair(str(user.id), settings)
+    access_token, refresh_token = _create_token_pair(str(user.id), settings, token_type="access")
 
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
+        token_type="bearer",
+    )
+
+
+class ServiceTokenRequest(BaseModel):
+    service_name: str
+    token: str
+
+
+class ServiceTokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+
+@router.post("/token/service")
+async def service_login(
+    request: ServiceTokenRequest,
+) -> ServiceTokenResponse:
+    settings = get_settings()
+
+    try:
+        payload = jwt.decode(request.token, settings.secret_key, algorithms=[settings.algorithm])
+    except jwt.PyJWTError as err:
+        raise HTTPException(status_code=401, detail="Invalid service token") from err
+
+    if payload.get("sub") not in settings.allowed_services:
+        raise HTTPException(status_code=403, detail="Unknown service")
+
+    access_token, _ = _create_token_pair(request.service_name, settings, token_type="service")
+
+    return ServiceTokenResponse(
+        access_token=access_token,
         token_type="bearer",
     )
 
@@ -113,7 +145,7 @@ async def create_user(
         db.rollback()
         raise HTTPException(status_code=409, detail="Username already in use.") from err
 
-    access_token, refresh_token = _create_token_pair(str(user_id), settings)
+    access_token, refresh_token = _create_token_pair(str(user_id), settings, token_type="access")
 
     return LoginResponse(
         access_token=access_token,
@@ -136,11 +168,11 @@ def refresh(request: RefreshTokenRequest) -> LoginResponse:
         raise HTTPException(status_code=401, detail="Invalid refresh token") from err
 
     subject = payload.get("sub")
-    token_type = payload.get("typ")
+    token_type = payload.get("type")
     if not subject or token_type != "refresh":
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    access_token, refresh_token = _create_token_pair(str(subject), settings)
+    access_token, refresh_token = _create_token_pair(str(subject), settings, token_type="access")
 
     return LoginResponse(
         access_token=access_token,

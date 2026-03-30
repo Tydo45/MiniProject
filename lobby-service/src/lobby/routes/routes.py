@@ -1,6 +1,9 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Protocol
 
+import httpx
+import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
@@ -9,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from lobby.api_models import InviteResponse, LobbyResponse, OpenLobbyResponse
 from lobby.auth import get_current_user_id
+from lobby.config import get_settings
 from lobby.db import get_db
 from lobby.models import Invite, Lobby, OpenLobby
 from lobby.realtime import RealtimeNotifier, get_notifier
@@ -16,6 +20,48 @@ from lobby.realtime import RealtimeNotifier, get_notifier
 router = APIRouter()
 
 security = HTTPBearer()
+
+CHESS_SERVICE_URL = "http://chess-service:8002"
+
+
+class ChessServiceClient(Protocol):
+    async def create_game(
+        self, white_player_id: uuid.UUID, black_player_id: uuid.UUID
+    ) -> uuid.UUID: ...
+
+
+class HttpxChessServiceClient:
+    async def create_game(
+        self, white_player_id: uuid.UUID, black_player_id: uuid.UUID
+    ) -> uuid.UUID:
+        settings = get_settings()
+        access_token = jwt.encode(
+            {
+                "sub": "lobby-service",
+                "type": "service",
+                "exp": datetime.now(UTC) + timedelta(minutes=30),
+            },
+            settings.secret_key,
+            algorithm=settings.algorithm,
+        )
+        headers = {"Authorization": f"Bearer {access_token}"}
+        chess_payload = {
+            "white_player_id": str(white_player_id),
+            "black_player_id": str(black_player_id),
+        }
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            http_response = await client.post(
+                f"{CHESS_SERVICE_URL}/games/create",
+                headers=headers,
+                json=chess_payload,
+            )
+        http_response.raise_for_status()
+        game_data = http_response.json()
+        return uuid.UUID(game_data["id"])
+
+
+def get_chess_service_client() -> ChessServiceClient:
+    return HttpxChessServiceClient()
 
 
 @router.get("/health")
@@ -212,6 +258,7 @@ async def ready(
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
     notifier: RealtimeNotifier = Depends(get_notifier),
+    chess_client: ChessServiceClient = Depends(get_chess_service_client),
 ) -> ReadyResponse:
     """
     Ready the user into the specified lobby.
@@ -246,21 +293,20 @@ async def ready(
     db.commit()
     db.refresh(lobby)
 
-    response = ReadyResponse(
-        game_id=None,
-        both_ready=lobby.player_1_ready and lobby.player_2_ready,
-    )
+    both_ready = lobby.player_1_ready and lobby.player_2_ready
 
-    if response.both_ready:
-        # TODO: Request create game to chess-service
-        response.game_id = None  # TODO: replace with game id after game creation
+    if both_ready:
+        game_id = await chess_client.create_game(lobby.player_id_1, lobby.player_id_2)
+        ready_response = ReadyResponse(game_id=game_id, both_ready=True)
 
         await notifier.notify_user(
             getattr(lobby, f"player_id_{opposing_player_num}"),
             {
                 "type": "user_ready",
-                "ReadyResponse": response.model_dump(mode="json"),
+                "ReadyResponse": ready_response.model_dump(mode="json"),
             },
         )
 
-    return response
+        return ready_response
+
+    return ReadyResponse(game_id=None, both_ready=False)

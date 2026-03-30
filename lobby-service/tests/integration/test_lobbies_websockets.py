@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 import pytest
+from conftest import FAKE_GAME_ID
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -494,7 +495,7 @@ def test_ready_notifies_opponent_when_both_players_are_ready(
     )
 
     assert response.status_code == 200
-    assert response.json() == {"game_id": None, "both_ready": True}
+    assert response.json() == {"game_id": str(FAKE_GAME_ID), "both_ready": True}
 
     refreshed_lobby = db_session.execute(select(Lobby).where(Lobby.id == lobby.id)).scalar_one()
     assert refreshed_lobby.player_1_ready is True
@@ -506,4 +507,4 @@ def test_ready_notifies_opponent_when_both_players_are_ready(
     assert message["type"] == "user_ready"
     readyResponse = ReadyResponse.model_validate(message["ReadyResponse"])
     assert readyResponse.both_ready is True
-    assert readyResponse.game_id is None
+    assert readyResponse.game_id == FAKE_GAME_ID
