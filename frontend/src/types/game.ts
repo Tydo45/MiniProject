@@ -32,3 +32,18 @@ export interface GameResponse {
 export interface GamesResponse {
   games: GameResponse[];
 }
+
+export interface GameUpdatedMessage      { type: "game_updated";      gameId: string }
+export interface DrawProposedMessage     { type: "draw_proposed";     gameId: string }
+export interface DrawAcceptedMessage     { type: "draw_accepted";     gameId: string }
+export interface DrawDeclinedMessage     { type: "draw_declined";     gameId: string }
+export interface OpponentResignedMessage { type: "opponent_resigned"; gameId: string }
+export interface GamePongMessage         { type: "pong" }
+
+export type GameSocketMessage =
+  | GameUpdatedMessage
+  | DrawProposedMessage
+  | DrawAcceptedMessage
+  | DrawDeclinedMessage
+  | OpponentResignedMessage
+  | GamePongMessage;

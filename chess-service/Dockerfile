@@ -7,6 +7,6 @@ COPY alembic.ini .
 COPY alembic ./alembic
 COPY src ./src
 
-RUN pip install .
+RUN pip install -e .
 
 CMD ["uvicorn", "chess_service.main:app", "--host", "0.0.0.0", "--port", "8002"]

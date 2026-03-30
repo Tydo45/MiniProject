@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import time
 import uuid
 
@@ -51,7 +52,11 @@ def postgres_container():
 
     alembic_env = os.environ.copy()
     alembic_env["DATABASE_URL"] = database_url
-    subprocess.run(["alembic", "upgrade", "head"], check=True, env=alembic_env)
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        check=True,
+        env=alembic_env,
+    )
 
     yield postgres_container_name
 
@@ -90,7 +95,7 @@ def clear_realtime_connections() -> None:  # type: ignore
     manager._connections.clear()
 
 
-def make_token(payload: dict[str, str]) -> str:
+def make_token(payload: dict[str, object]) -> str:
     settings = get_settings()
     return jwt.encode(
         payload,
@@ -101,6 +106,10 @@ def make_token(payload: dict[str, str]) -> str:
 
 def make_auth_headers(user_id: uuid.UUID) -> dict[str, str]:
     return {"Authorization": f"Bearer {make_token({'sub': str(user_id)})}"}
+
+
+def make_service_auth_headers() -> dict[str, str]:
+    return {"Authorization": (f"Bearer {make_token({'sub': 'test-service', 'type': 'service'})}")}
 
 
 @pytest.fixture
@@ -117,7 +126,7 @@ def create_game(client: TestClient):
                 "white_player_id": str(white_player_id),
                 "black_player_id": str(black_player_id),
             },
-            headers=make_auth_headers(requester_id or white_player_id),
+            headers=make_service_auth_headers(),
         )
         assert response.status_code == 200
 

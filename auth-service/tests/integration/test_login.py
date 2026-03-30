@@ -9,7 +9,7 @@ def test_login_returns_tokens_for_valid_credentials(client):
     password = "test-password-123"
 
     create_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -39,7 +39,7 @@ def test_login_returns_401_for_wrong_password(client):
     password = "correct-password-123"
 
     create_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,

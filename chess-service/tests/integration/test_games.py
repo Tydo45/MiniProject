@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 import pytest
-from conftest import add_event, get_game, make_auth_headers
+from conftest import add_event, get_game, make_auth_headers, make_service_auth_headers
 from fastapi.testclient import TestClient
 
 from chess_service.db import SessionLocal
@@ -155,7 +155,7 @@ def test_create_game_persists_and_returns_created_game(
             "white_player_id": str(white_player_id),
             "black_player_id": str(black_player_id),
         },
-        headers=make_auth_headers(white_player_id),
+        headers=make_service_auth_headers(),
     )
 
     assert response.status_code == 200
@@ -174,7 +174,7 @@ def test_create_game_persists_and_returns_created_game(
     assert persisted_game.is_draw is False
 
 
-def test_create_game_allows_authenticated_requester_who_is_not_a_player(
+def test_create_game_rejects_user_token(
     client: TestClient,
 ) -> None:
     white_player_id = uuid.uuid4()
@@ -188,6 +188,25 @@ def test_create_game_allows_authenticated_requester_who_is_not_a_player(
             "black_player_id": str(black_player_id),
         },
         headers=make_auth_headers(requester_id),
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Service token required"}
+
+
+def test_create_game_allows_service_token_when_requester_is_not_a_player(
+    client: TestClient,
+) -> None:
+    white_player_id = uuid.uuid4()
+    black_player_id = uuid.uuid4()
+
+    response = client.post(
+        "/games/create",
+        json={
+            "white_player_id": str(white_player_id),
+            "black_player_id": str(black_player_id),
+        },
+        headers=make_service_auth_headers(),
     )
 
     assert response.status_code == 200
@@ -222,7 +241,7 @@ def test_create_game_rejects_malformed_bodies(
     response = client.post(
         "/games/create",
         json=body,
-        headers=make_auth_headers(uuid.uuid4()),
+        headers=make_service_auth_headers(),
     )
 
     assert response.status_code == 422

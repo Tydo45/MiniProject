@@ -13,7 +13,7 @@ def test_create_user_creates_new_user_and_returns_tokens(client, db_session):
     password = "new-user-password-123"
 
     response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -41,7 +41,7 @@ def test_create_user_returns_409_for_duplicate_username(client):
     password = "duplicate-password-123"
 
     first_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -50,7 +50,7 @@ def test_create_user_returns_409_for_duplicate_username(client):
     assert first_response.status_code == 200
 
     second_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -67,7 +67,7 @@ def test_create_user_creates_user_and_returns_tokens(client, db_session):
     password = "new-user-password-123"
 
     response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -101,7 +101,7 @@ def test_create_user_duplicate_username_returns_409_and_does_not_create_second_u
     password = "duplicate-password-123"
 
     first_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,
@@ -110,7 +110,7 @@ def test_create_user_duplicate_username_returns_409_and_does_not_create_second_u
     assert first_response.status_code == 200
 
     second_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,

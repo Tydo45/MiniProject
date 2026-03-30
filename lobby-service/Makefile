@@ -1,7 +1,11 @@
-.PHONY: install lint type test-unit test-integration test-system test check format run docker-clean
+.PHONY: install lint type test-unit test-integration test-system test check format run docker-clean env
 
 install:
 	pip install -e ".[dev]"
+
+env:
+	python3 -m venv .venv
+	.venv/bin/python -m pip install -e ".[dev]"
 
 lint:
 	ruff check src tests

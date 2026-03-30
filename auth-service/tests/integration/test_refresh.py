@@ -12,7 +12,7 @@ def test_refresh_returns_new_tokens_for_valid_refresh_token(client):
     password = "refresh-password-123"
 
     create_response = client.post(
-        "/create-user",
+        "/user",
         data={
             "username": username,
             "password": password,

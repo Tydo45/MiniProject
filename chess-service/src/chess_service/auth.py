@@ -89,20 +89,23 @@ def get_current_user_id(
 
 def get_current_websocket_user_id(websocket: WebSocket) -> uuid.UUID:
     authorization = websocket.headers.get("Authorization")
-    if not authorization:
-        raise _not_authenticated()
+    if authorization:
+        try:
+            scheme, token = authorization.split(" ", 1)
+        except ValueError as err:
+            raise _not_authenticated() from err
 
-    try:
-        scheme, token = authorization.split(" ", 1)
-    except ValueError as err:
-        raise _not_authenticated() from err
-
-    return get_current_user_id(
-        HTTPAuthorizationCredentials(
-            scheme=scheme,
-            credentials=token,
+        return get_current_user_id(
+            HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
         )
-    )
+
+    query_token = websocket.query_params.get("token")
+    if query_token:
+        return get_current_user_id(
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials=query_token)
+        )
+
+    raise _not_authenticated()
 
 
 def verify_service_token(

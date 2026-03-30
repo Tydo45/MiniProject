@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUserIdFromToken, getStoredAccessToken } from "../api/auth";
+import { listGames } from "../api/chess";
 import {
   acceptInvite,
   ApiError,
@@ -16,6 +17,7 @@ import type {
   LobbySocketMessage,
   OpenLobbyResponse,
 } from "../types/lobby";
+import type { GameResponse } from "../types/game";
 import "../LobbyPage.css";
 
 const ACTIVE_LOBBY_STORAGE_KEY = "active_lobby";
@@ -101,6 +103,7 @@ export default function LobbyPage() {
   );
   const [openLobbies, setOpenLobbies] = useState<OpenLobbyResponse[]>([]);
   const [invites, setInvites] = useState<InviteResponse[]>([]);
+  const [openGames, setOpenGames] = useState<GameResponse[]>([]);
   const [activeLobby, setActiveLobby] = useState<LobbyResponse | null>(() =>
     getStoredActiveLobby(),
   );
@@ -166,13 +169,15 @@ export default function LobbyPage() {
       setPageError("");
 
       try {
-        const [nextOpenLobbies, nextInvites] = await Promise.all([
+        const [nextOpenLobbies, nextInvites, nextOpenGames] = await Promise.all([
           listOpenLobbies(),
           listInvites(),
+          listGames(),
         ]);
 
         setOpenLobbies(nextOpenLobbies);
         setInvites(nextInvites);
+        setOpenGames(nextOpenGames.games);
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
           handleUnauthorized();
@@ -266,6 +271,7 @@ export default function LobbyPage() {
         });
 
         if (message.ReadyResponse.game_id) {
+          setActiveLobby(null);
           navigate(`/game/${message.ReadyResponse.game_id}`);
           return;
         }
@@ -391,6 +397,7 @@ export default function LobbyPage() {
       setActiveLobby(nextLobby);
 
       if (readyResponse.game_id) {
+        setActiveLobby(null);
         navigate(`/game/${readyResponse.game_id}`);
         return;
       }
@@ -511,6 +518,52 @@ export default function LobbyPage() {
             </div>
 
             {lobbyNotice && <p className="success">{lobbyNotice}</p>}
+          </section>
+        )}
+
+        {openGames.length > 0 && (
+          <section className="lobby-card">
+            <div className="card-heading">
+              <div>
+                <p className="eyebrow">In Progress</p>
+                <h2>Your open games</h2>
+              </div>
+            </div>
+
+            <div className="list-stack">
+              {openGames.map((game) => {
+                const moveCount = game.events.length;
+                const isYourTurn =
+                  (moveCount % 2 === 0 && game.white_player_id === currentUserId) ||
+                  (moveCount % 2 === 1 && game.black_player_id === currentUserId);
+
+                return (
+                  <article className="list-item" key={game.id}>
+                    <div>
+                      <strong>
+                        {shortId(game.white_player_id)} vs {shortId(game.black_player_id)}
+                      </strong>
+                      <p className="helper-text">
+                        Started {formatTimestamp(game.created_at)} · {moveCount} move
+                        {moveCount !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      {isYourTurn && (
+                        <span className="readiness-pill ready">Your turn</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/game/${game.id}`)}
+                      >
+                        Resume
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </section>
         )}
 

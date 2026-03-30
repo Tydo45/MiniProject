@@ -3,6 +3,10 @@
 install:
 	pip install -e ".[dev]"
 
+env:
+	python3 -m venv .venv
+	.venv/bin/python -m pip install -e ".[dev]"
+
 lint:
 	ruff check src tests
 
