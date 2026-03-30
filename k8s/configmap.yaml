@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: microservices
+data:
+  01-init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+      CREATE USER ${AUTH_DB_USER} WITH PASSWORD '${AUTH_DB_PASSWORD}';
+      CREATE DATABASE ${AUTH_DB_NAME} OWNER ${AUTH_DB_USER};
+
+      CREATE USER ${LOBBY_DB_USER} WITH PASSWORD '${LOBBY_DB_PASSWORD}';
+      CREATE DATABASE ${LOBBY_DB_NAME} OWNER ${LOBBY_DB_USER};
+
+      CREATE USER ${CHESS_DB_USER} WITH PASSWORD '${CHESS_DB_PASSWORD}';
+      CREATE DATABASE ${CHESS_DB_NAME} OWNER ${CHESS_DB_USER};
+    EOSQL

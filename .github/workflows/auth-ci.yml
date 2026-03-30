@@ -8,6 +8,7 @@ on:
       - 'auth-service/**'
       - '.github/workflows/auth-ci.yml'
       - '.github/workflows/_python-service-ci.yml'
+      - '.github/workflows/build-push.yml'
   workflow_dispatch:
 
 jobs:
