@@ -12,9 +12,6 @@ on:
 
 jobs:
   frontend-ci:
-    permissions:
-      contents: read
-      packages: write
     name: Lint & Build
     runs-on: ubuntu-latest
     defaults:
@@ -49,6 +46,9 @@ jobs:
           retention-days: 7
 
   build-and-push:
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-push.yml
     with:
       service_path: frontend
