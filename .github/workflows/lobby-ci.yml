@@ -15,3 +15,4 @@ jobs:
     uses: ./.github/workflows/_python-service-ci.yml
     with:
       service_path: lobby-service
+      image_name: lobby-service

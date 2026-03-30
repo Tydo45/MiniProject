@@ -34,6 +34,8 @@ def test_health(client: TestClient) -> None:
     ("method", "path", "payload"),
     [
         ("GET", "/open-lobbies", None),
+        ("POST", "/open-lobbies", None),
+        ("GET", f"/open-lobbies/join/{make_uuid(1)}", None),
         ("GET", "/invites", None),
         ("POST", "/invites/send", {"invitee_id": str(make_uuid(2))}),
         ("POST", "/invites/accept", {"invite_id": str(make_uuid(3))}),

@@ -88,6 +88,95 @@ def list_open_lobbies(
     return [OpenLobbyResponse.model_validate(lobby) for lobby in lobbies]
 
 
+@router.post("/open-lobbies", response_model=OpenLobbyResponse)
+def create_open_lobby(
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> OpenLobbyResponse:
+    """
+    Create a new Open Lobby. Any player is able to join.
+
+    Requires a valid JWT.
+
+    Returns:
+        OpenLobbyResponse: The newly created open game.
+    """
+    stmt = select(OpenLobby).where(
+        OpenLobby.host_player_id == user_id,
+        OpenLobby.is_open,
+    )
+    existing = db.execute(stmt).scalar_one_or_none()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You already have an open lobby",
+        )
+
+    openLobby = OpenLobby(
+        host_player_id=user_id,
+    )
+    db.add(openLobby)
+    db.commit()
+    db.refresh(openLobby)
+
+    return OpenLobbyResponse.model_validate(openLobby)
+
+
+@router.get("/open-lobbies/join/{lobby_id}", response_model=LobbyResponse)
+async def join_open_lobby(
+    lobby_id: str,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+    notifier: RealtimeNotifier = Depends(get_notifier),
+) -> LobbyResponse:
+    """
+    Join an open lobby.
+
+    Requires a valid JWT.
+
+    Returns:
+        LobbyResponse: New lobby with the host and the joining player.
+    """
+    stmt = select(OpenLobby).where(OpenLobby.id == lobby_id).with_for_update()
+    open_lobby = db.execute(stmt).scalar_one_or_none()
+
+    if not open_lobby:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Open Lobby: {lobby_id} not available",
+        )
+
+    if open_lobby.host_player_id == user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot join your own open lobby",
+        )
+
+    open_lobby.is_open = False
+    open_lobby.joined_at = datetime.now(UTC)
+
+    lobby = Lobby(
+        player_id_1=open_lobby.host_player_id,
+        player_id_2=user_id,
+    )
+
+    db.add(lobby)
+    db.commit()
+    db.refresh(lobby)
+
+    lobbyResponse = LobbyResponse.model_validate(lobby)
+
+    await notifier.notify_user(
+        open_lobby.host_player_id,
+        {
+            "type": "open_join",
+            "lobby": lobbyResponse.model_dump(mode="json"),
+        },
+    )
+
+    return lobbyResponse
+
+
 @router.get("/invites", response_model=list[InviteResponse])
 def list_open_invites(
     user_id: uuid.UUID = Depends(get_current_user_id),

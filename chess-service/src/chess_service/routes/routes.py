@@ -35,7 +35,7 @@ def game(
     db: Session = Depends(get_db),
 ) -> GamesResponse:
     """
-    Lists all open games the user is playing in.
+    Lists all open games the user is apart of.
 
     Requires a valid JWT. Requires User to be part of the Game and
     user is next to move.
