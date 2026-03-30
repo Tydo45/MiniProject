@@ -1,5 +1,7 @@
 .PHONY: install lint type test-unit test-integration test-system test check format run test-cov-report
 
+export CI_DATABASE_URL=postgresql+psycopg://ci:ci@localhost:5432/ci
+
 install:
 	pip install -e ".[dev]"
 

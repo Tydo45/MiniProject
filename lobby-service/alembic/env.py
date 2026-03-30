@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from lobby import models
-from lobby.config import get_database_url
+from lobby.config import get_environment_database_url
 from lobby.db import Base
 
 
@@ -28,7 +28,7 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-config.set_main_option("sqlalchemy.url", get_database_url())
+config.set_main_option("sqlalchemy.url", get_environment_database_url())
 
 
 def run_migrations_offline() -> None:

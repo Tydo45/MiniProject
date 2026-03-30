@@ -6,21 +6,15 @@ from collections.abc import Callable, Generator
 
 import jwt
 import pytest
-from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from lobby.config import get_environment_database_url, get_settings, reset_settings_cache
+from lobby.config import get_environment_database_url, get_settings
 from lobby.db import get_db
 from lobby.main import app
 from lobby.realtime import get_notifier, manager
 from lobby.routes.routes import get_chess_service_client
-
-load_dotenv()
-reset_settings_cache()
-database_url = get_environment_database_url()
-
 
 FAKE_GAME_ID = uuid.UUID("00000000-0000-0000-0000-000000009999")
 
@@ -66,7 +60,7 @@ def postgres_container() -> Generator[None, None, None]:
     time.sleep(5)
 
     alembic_env = os.environ.copy()
-    alembic_env["DATABASE_URL"] = database_url
+    alembic_env["DATABASE_URL"] = get_environment_database_url()
     subprocess.run(["alembic", "upgrade", "head"], check=True, env=alembic_env)
 
     yield
@@ -76,7 +70,7 @@ def postgres_container() -> Generator[None, None, None]:
 
 @pytest.fixture
 def db_session(postgres_container: None) -> Generator[Session, None, None]:
-    engine = create_engine(database_url)
+    engine = create_engine(get_environment_database_url())
     session_local = sessionmaker(bind=engine)
 
     connection = engine.connect()
