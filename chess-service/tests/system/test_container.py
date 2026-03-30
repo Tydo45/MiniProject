@@ -66,7 +66,7 @@ def test_container_health():
             "--network",
             network,
             "-p",
-            "8000:8000",
+            "8002:8002",
             "-e",
             f"DATABASE_URL=postgresql+psycopg://ci:ci@{postgres_container_name}:5432/ci",
             "-e",
@@ -79,7 +79,7 @@ def test_container_health():
     try:
         time.sleep(5)
 
-        response = requests.get("http://localhost:8000/health")
+        response = requests.get("http://localhost:8002/health")
 
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}

@@ -95,9 +95,7 @@ def get_current_websocket_user_id(websocket: WebSocket) -> uuid.UUID:
         except ValueError as err:
             raise _not_authenticated() from err
 
-        return get_current_user_id(
-            HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
-        )
+        return get_current_user_id(HTTPAuthorizationCredentials(scheme=scheme, credentials=token))
 
     query_token = websocket.query_params.get("token")
     if query_token:
