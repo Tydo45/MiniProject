@@ -1,5 +1,12 @@
 # Multiplayer Chess with Microservices
 
+## Documentation & Configurations
+
+Refer to each services README for detailed info:
+- [Chess Service](chess-service/README.md)  
+- [Lobby Service](lobby-service/README.md)   
+- [Auth Service](auth-service/README.md)
+
 ### Setup (minikube)
 
 **1. Install kubectl and minikube**
