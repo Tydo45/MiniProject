@@ -17,18 +17,18 @@ spec:
         - name: migrate
           image: ghcr.io/tydo45/chess-service:latest
           command: ["alembic", "upgrade", "head"]
-          env:
-            - name: DATABASE_URL
-              value: postgresql+psycopg://postgres:postgres@postgres:5432/chess_db
+          envFrom:
+            - secretRef:
+                name: chess-secret
       containers:
         - name: chess-service
           image: ghcr.io/tydo45/chess-service:latest
           command: ["uvicorn", "chess_service.main:app", "--host", "0.0.0.0", "--port", "8002"]
           ports:
             - containerPort: 8002
-          env:
-            - name: DATABASE_URL
-              value: postgresql+psycopg://postgres:postgres@postgres:5432/chess_db
+          envFrom:
+            - secretRef:
+                name: chess-secret
           readinessProbe:
             httpGet:
               path: /health

@@ -108,8 +108,11 @@ apply_services() {
   info "Applying services..."
 
   kubectl apply -f "${SCRIPT_DIR}/auth-service/deployment.yaml"
+  kubectl apply -f "${SCRIPT_DIR}/auth-service/secret.yaml"
   kubectl apply -f "${SCRIPT_DIR}/lobby-service/deployment.yaml"
+  kubectl apply -f "${SCRIPT_DIR}/lobby-service/secret.yaml"
   kubectl apply -f "${SCRIPT_DIR}/chess-service/deployment.yaml"
+  kubectl apply -f "${SCRIPT_DIR}/chess-service/secret.yaml"
   kubectl apply -f "${SCRIPT_DIR}/frontend/deployment.yaml"
   kubectl apply -f "${SCRIPT_DIR}/ingress.yaml"
 
