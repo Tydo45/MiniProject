@@ -10,6 +10,7 @@ import {
   offerDraw,
   resign,
 } from "../api/chess";
+import { connectGameSocket } from "../api/socket";
 import type { GameEventResponse, GameResponse, GameSocketMessage } from "../types/game";
 import "../styles/GamePage.css";
 
@@ -283,31 +284,16 @@ export default function GamePage() {
       if (disposed) return;
       setConnectionState("connecting");
 
-      const ws = new WebSocket(`ws://localhost:8002/ws?token=${accessToken}`);
-      socket = ws;
-
-      ws.onopen = () => {
-        if (!disposed) setConnectionState("live");
-      };
-
-      ws.onclose = () => {
-        if (disposed) return;
-        setConnectionState("offline");
-        reconnectTimer = window.setTimeout(openSocket, SOCKET_RECONNECT_DELAY_MS);
-      };
-
-      ws.onerror = () => {
-        if (!disposed) setConnectionState("offline");
-      };
-
-      ws.onmessage = (event: MessageEvent<string>) => {
-        try {
-          const message = JSON.parse(event.data) as GameSocketMessage;
-          handleMessage(message);
-        } catch {
-          // ignore parse errors
-        }
-      };
+      socket = connectGameSocket(accessToken, {
+        onOpen: () => { if (!disposed) setConnectionState("live"); },
+        onClose: () => {
+          if (disposed) return;
+          setConnectionState("offline");
+          reconnectTimer = window.setTimeout(openSocket, SOCKET_RECONNECT_DELAY_MS);
+        },
+        onError: () => { if (!disposed) setConnectionState("offline"); },
+        onMessage: handleMessage,
+      });
     };
 
     openSocket();
