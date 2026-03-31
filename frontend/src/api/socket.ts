@@ -1,6 +1,7 @@
 import type { LobbySocketMessage } from "../types/lobby";
 
-const LOBBY_WS_URL = "ws://localhost:8001/ws";
+const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+const LOBBY_WS_URL = `${protocol}//${window.location.host}/api/lobby/ws`;
 
 type SocketHandlers = {
   onClose?: () => void;
