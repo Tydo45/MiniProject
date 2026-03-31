@@ -1,6 +1,6 @@
 import type { GameEventResponse, GamesResponse } from "../types/game";
 
-const CHESS_API_BASE = "http://localhost:8002";
+const CHESS_API_BASE = "/api/chess";
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {

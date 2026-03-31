@@ -1,7 +1,7 @@
 // src/api/auth.ts
 import type { Credentials, JwtPayload, LoginResponse } from "../types/auth";
 
-const AUTH_API_BASE = "http://localhost:8000";
+const AUTH_API_BASE = "/api/auth";
 
 function toFormBody(credentials: Credentials): URLSearchParams {
   const body = new URLSearchParams();

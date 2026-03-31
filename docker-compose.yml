@@ -68,7 +68,9 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     working_dir: /app
     volumes:
       - ./frontend:/app

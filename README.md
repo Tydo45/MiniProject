@@ -29,11 +29,11 @@ make deploy
 
 **5. Access the frontend**
 
-minikube doesn't expose `localhost` directly, leave this running in a separate terminal:
+minikube doesn't expose `localhost`, leave this running in a separate terminal:
 ```bash
 minikube tunnel
 ```
-Then visit `http://localhost` in your browser.
+Then visit `http://localhost` in a browser.
 
 ---
 
@@ -41,10 +41,10 @@ Then visit `http://localhost` in your browser.
 
 ```bash
 minikube status                                   # Check cluster is running
-kubectl get pods -n microservices                 # See all your pods
+kubectl get pods -n microservices                 # See all pods
 kubectl logs <pod-name> -n microservices          # Logs for a pod
 kubectl describe pod <pod-name> -n microservices  # Debug a stuck pod
-minikube dashboard                                # Visual UI in your browser
+minikube dashboard                                # Visual UI in a browser
 minikube stop                                     # Pause the cluster
 minikube delete                                   # Wipe everything and start fresh
 ```

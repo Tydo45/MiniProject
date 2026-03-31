@@ -5,7 +5,7 @@ import type {
   ReadyResponse,
 } from "../types/lobby";
 
-const LOBBY_API_BASE = "http://localhost:8001";
+const LOBBY_API_BASE = "/api/lobby";
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
